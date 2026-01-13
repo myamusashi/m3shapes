@@ -69,8 +69,10 @@ public:
             setAnimationDuration NOTIFY animationDurationChanged)
     Q_PROPERTY(QEasingCurve animationEasing READ animationEasing WRITE
             setAnimationEasing NOTIFY animationEasingChanged)
-    Q_PROPERTY(QColor fillColor READ fillColor WRITE setFillColor NOTIFY
-            fillColorChanged)
+    Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
+    Q_PROPERTY(
+        qreal implicitSize READ implicitSize WRITE setImplicitSize NOTIFY
+            implicitSizeChanged)
     Q_PROPERTY(QColor strokeColor READ strokeColor WRITE setStrokeColor NOTIFY
             strokeColorChanged)
     Q_PROPERTY(float strokeWidth READ strokeWidth WRITE setStrokeWidth NOTIFY
@@ -96,9 +98,13 @@ public:
 
     void setAnimationEasing(const QEasingCurve& easing);
 
-    [[nodiscard]] QColor fillColor() const { return m_fillColor; }
+    [[nodiscard]] QColor color() const { return m_color; }
 
-    void setFillColor(const QColor& color);
+    void setColor(const QColor& color);
+
+    [[nodiscard]] qreal implicitSize() const { return m_implicitSize; }
+
+    void setImplicitSize(qreal size);
 
     [[nodiscard]] QColor strokeColor() const { return m_strokeColor; }
 
@@ -118,7 +124,8 @@ signals:
     void shapeChanged();
     void animationDurationChanged();
     void animationEasingChanged();
-    void fillColorChanged();
+    void colorChanged();
+    void implicitSizeChanged();
     void strokeColorChanged();
     void strokeWidthChanged();
     void shapeRotationChanged();
@@ -144,7 +151,8 @@ private:
     int m_animationDuration = 350;
     QEasingCurve m_animationEasing;
     float m_morphProgress = 1.0f;
-    QColor m_fillColor = Qt::black;
+    QColor m_color = Qt::black;
+    qreal m_implicitSize = 0.0;
     QColor m_strokeColor = Qt::transparent;
     float m_strokeWidth = 0.0f;
     float m_shapeRotation = 0.0f;

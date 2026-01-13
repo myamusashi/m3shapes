@@ -50,10 +50,9 @@ ApplicationWindow {
             MaterialShape {
                 id: mainShape
                 anchors.centerIn: parent
-                width: Math.min(parent.width, parent.height) * 0.8
-                height: width
+                implicitSize: Math.min(parent.width, parent.height) * 0.8
                 shape: MaterialShape.Circle
-                fillColor: Qt.hsla(0.6, 0.7, 0.6, 1.0)
+                color: Qt.hsla(0.6, 0.7, 0.6, 1.0)
                 // Uses Material 3 default animation (350ms, EmphasizedDecelerate)
             }
 
@@ -104,10 +103,9 @@ ApplicationWindow {
 
                                 MaterialShape {
                                     Layout.alignment: Qt.AlignHCenter
-                                    Layout.preferredWidth: 50
-                                    Layout.preferredHeight: 50
+                                    implicitSize: 50
                                     shape: window.shapeEnums[index]
-                                    fillColor: Qt.hsla(index * 0.03, 0.7, 0.6, 1.0)
+                                    color: Qt.hsla(index * 0.03, 0.7, 0.6, 1.0)
                                     animationDuration: 0
                                 }
 
@@ -126,7 +124,7 @@ ApplicationWindow {
                                 anchors.fill: parent
                                 onClicked: {
                                     mainShape.shape = window.shapeEnums[index]
-                                    mainShape.fillColor = Qt.hsla(index * 0.03, 0.7, 0.6, 1.0)
+                                    mainShape.color = Qt.hsla(index * 0.03, 0.7, 0.6, 1.0)
                                 }
                             }
                         }
@@ -165,7 +163,7 @@ ApplicationWindow {
                 onClicked: {
                     var randomIndex = Math.floor(Math.random() * 35)
                     mainShape.shape = window.shapeEnums[randomIndex]
-                    mainShape.fillColor = Qt.hsla(randomIndex * 0.03, 0.7, 0.6, 1.0)
+                    mainShape.color = Qt.hsla(randomIndex * 0.03, 0.7, 0.6, 1.0)
                 }
             }
         }

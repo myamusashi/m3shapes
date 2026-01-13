@@ -25,7 +25,7 @@ MaterialShape {
     width: 100
     height: 100
     shape: MaterialShape.Heart
-    fillColor: "red"
+    color: "red"
 }
 ```
 
@@ -39,7 +39,7 @@ MaterialShape {
     width: 200
     height: 200
     shape: MaterialShape.Circle
-    fillColor: "#6750A4"
+    color: "#6750A4"
 }
 
 Button {
@@ -53,7 +53,7 @@ Button {
 ```qml
 MaterialShape {
     shape: MaterialShape.Star
-    fillColor: "gold"
+    color: "gold"
 
     // Duration in milliseconds (default: 350)
     animationDuration: 500
@@ -65,16 +65,17 @@ MaterialShape {
 
 ## Properties
 
-| Property            | Type       | Default     | Description                |
-| ------------------- | ---------- | ----------- | -------------------------- |
-| `shape`             | Shape enum | Circle      | The target shape           |
-| `fillColor`         | color      | black       | Fill color                 |
-| `strokeColor`       | color      | transparent | Stroke color               |
-| `strokeWidth`       | float      | 0           | Stroke width               |
-| `shapeRotation`     | float      | 0           | Rotation in degrees        |
-| `animationDuration` | int        | 350         | Morph duration in ms       |
-| `animationEasing`   | easing     | spring-like | Animation easing curve     |
-| `morphProgress`     | float      | (read-only) | Current morph progress 0-1 |
+| Property            | Type       | Default     | Description                           |
+| ------------------- | ---------- | ----------- | ------------------------------------- |
+| `shape`             | Shape enum | Circle      | The target shape                      |
+| `color`             | color      | black       | Fill color                            |
+| `implicitSize`      | real       | 0           | Sets implicitWidth and implicitHeight |
+| `strokeColor`       | color      | transparent | Stroke color                          |
+| `strokeWidth`       | float      | 0           | Stroke width                          |
+| `shapeRotation`     | float      | 0           | Rotation in degrees                   |
+| `animationDuration` | int        | 350         | Morph duration in ms                  |
+| `animationEasing`   | easing     | spring-like | Animation easing curve                |
+| `morphProgress`     | float      | (read-only) | Current morph progress 0-1            |
 
 ## Available Shapes
 
@@ -134,7 +135,7 @@ ApplicationWindow {
         width: 200
         height: 200
         shape: MaterialShape.Circle
-        fillColor: Qt.hsla(0.8, 0.7, 0.6, 1.0)
+        color: Qt.hsla(0.8, 0.7, 0.6, 1.0)
     }
 
     Row {

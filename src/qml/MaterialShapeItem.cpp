@@ -99,11 +99,20 @@ void MaterialShapeItem::onMorphFinished() {
     update();
 }
 
-void MaterialShapeItem::setFillColor(const QColor& color) {
-    if (m_fillColor != color) {
-        m_fillColor = color;
-        emit fillColorChanged();
+void MaterialShapeItem::setColor(const QColor& color) {
+    if (m_color != color) {
+        m_color = color;
+        emit colorChanged();
         update();
+    }
+}
+
+void MaterialShapeItem::setImplicitSize(qreal size) {
+    if (!qFuzzyCompare(m_implicitSize, size)) {
+        m_implicitSize = size;
+        setImplicitWidth(size);
+        setImplicitHeight(size);
+        emit implicitSizeChanged();
     }
 }
 
@@ -208,7 +217,7 @@ QSGNode* MaterialShapeItem::updatePaintNode(QSGNode* oldNode,
         node->setFlag(QSGNode::OwnsGeometry);
 
         auto* material = new QSGFlatColorMaterial();
-        material->setColor(m_fillColor);
+        material->setColor(m_color);
         node->setMaterial(material);
 
         auto* geometry =
@@ -220,8 +229,8 @@ QSGNode* MaterialShapeItem::updatePaintNode(QSGNode* oldNode,
     }
 
     auto* material = dynamic_cast<QSGFlatColorMaterial*>(node->material());
-    if (material != nullptr && material->color() != m_fillColor) {
-        material->setColor(m_fillColor);
+    if (material != nullptr && material->color() != m_color) {
+        material->setColor(m_color);
         node->markDirty(QSGNode::DirtyMaterial);
     }
 
