@@ -10,11 +10,10 @@ MaterialShapeItem::MaterialShapeItem(QQuickItem* parent)
     : QQuickItem(parent) {
     setFlag(ItemHasContents, true);
 
-    // Approximate Material 3 spring (damping=0.8, stiffness=380) with bezier
-    // This creates a curve with slight overshoot (~5%) that settles back
+    // M3 expressive fast spatial
     m_animationEasing.setType(QEasingCurve::BezierSpline);
     m_animationEasing.addCubicBezierSegment(
-        QPointF(0.3, 1.3), QPointF(0.7, 1.0), QPointF(1.0, 1.0));
+        QPointF(0.42, 1.67), QPointF(0.21, 0.90), QPointF(1.0, 1.0));
 
     m_animation = new QPropertyAnimation(this);
     m_animation->setTargetObject(this);

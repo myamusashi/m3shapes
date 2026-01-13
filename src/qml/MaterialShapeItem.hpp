@@ -70,8 +70,7 @@ public:
     Q_PROPERTY(QEasingCurve animationEasing READ animationEasing WRITE
             setAnimationEasing NOTIFY animationEasingChanged)
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
-    Q_PROPERTY(
-        qreal implicitSize READ implicitSize WRITE setImplicitSize NOTIFY
+    Q_PROPERTY(qreal implicitSize READ implicitSize WRITE setImplicitSize NOTIFY
             implicitSizeChanged)
     Q_PROPERTY(QColor strokeColor READ strokeColor WRITE setStrokeColor NOTIFY
             strokeColorChanged)
@@ -146,8 +145,6 @@ private:
 
     Shape m_currentShape = Circle;
     Shape m_targetShape = Circle;
-    // Material 3 expressive spring: damping=0.8, stiffness=380
-    // Approximated with custom bezier curve
     int m_animationDuration = 350;
     QEasingCurve m_animationEasing;
     float m_morphProgress = 1.0f;
