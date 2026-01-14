@@ -53,7 +53,38 @@ ApplicationWindow {
                 implicitSize: Math.min(parent.width, parent.height) * 0.8
                 shape: MaterialShape.Circle
                 color: Qt.hsla(0.6, 0.7, 0.6, 1.0)
-                // Uses Material 3 default animation (350ms, EmphasizedDecelerate)
+                shapeRotation: autoRotateCheckbox.checked ? continuousRotation : rotationSlider.value
+
+                property real continuousRotation: 0
+
+                NumberAnimation on continuousRotation {
+                    running: autoRotateCheckbox.checked
+                    from: 0
+                    to: 360
+                    duration: 10000
+                    loops: Animation.Infinite
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    border.color: "#ff5555"
+                    border.width: 2
+                    visible: showBoundsCheckbox.checked
+                }
+            }
+
+            Timer {
+                id: autoMorphTimer
+                property int shapeIndex: 0
+                interval: mainShape.animationDuration + 500
+                running: autoMorphCheckbox.checked
+                repeat: true
+                onTriggered: {
+                    shapeIndex = (shapeIndex + 1) % 35
+                    mainShape.shape = window.shapeEnums[shapeIndex]
+                    mainShape.color = Qt.hsla(shapeIndex * 0.03, 0.7, 0.6, 1.0)
+                }
             }
 
             Text {
@@ -139,7 +170,7 @@ ApplicationWindow {
             spacing: 20
 
             Label {
-                text: "Morph Duration:"
+                text: "Duration:"
                 color: "#e0e0e0"
             }
 
@@ -148,7 +179,7 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 from: 100
                 to: 2000
-                value: 350  // Material 3 default
+                value: 350
                 onValueChanged: mainShape.animationDuration = value
             }
 
@@ -156,6 +187,61 @@ ApplicationWindow {
                 text: Math.round(durationSlider.value) + "ms"
                 color: "#e0e0e0"
                 Layout.preferredWidth: 60
+            }
+
+            Label {
+                text: "Rotation:"
+                color: "#e0e0e0"
+            }
+
+            Slider {
+                id: rotationSlider
+                Layout.fillWidth: true
+                from: 0
+                to: 360
+                value: 0
+            }
+
+            Label {
+                text: Math.round(rotationSlider.value) + "°"
+                color: "#e0e0e0"
+                Layout.preferredWidth: 40
+            }
+
+            CheckBox {
+                id: showBoundsCheckbox
+                text: "Bounds"
+                checked: false
+                contentItem: Text {
+                    text: showBoundsCheckbox.text
+                    color: "#e0e0e0"
+                    leftPadding: showBoundsCheckbox.indicator.width + 4
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+
+            CheckBox {
+                id: autoRotateCheckbox
+                text: "Spin"
+                checked: false
+                contentItem: Text {
+                    text: autoRotateCheckbox.text
+                    color: "#e0e0e0"
+                    leftPadding: autoRotateCheckbox.indicator.width + 4
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+
+            CheckBox {
+                id: autoMorphCheckbox
+                text: "Auto"
+                checked: false
+                contentItem: Text {
+                    text: autoMorphCheckbox.text
+                    color: "#e0e0e0"
+                    leftPadding: autoMorphCheckbox.indicator.width + 4
+                    verticalAlignment: Text.AlignVCenter
+                }
             }
 
             Button {
