@@ -149,12 +149,15 @@ QPainterPath MaterialShapeItem::buildPath() const {
 
     float itemWidth = static_cast<float>(width());
     float itemHeight = static_cast<float>(height());
-    float size = std::min(itemWidth, itemHeight);
     float centerX = itemWidth / 2.0f;
     float centerY = itemHeight / 2.0f;
 
     float cosR = std::cos(m_shapeRotation * FloatPi / 180.0f);
     float sinR = std::sin(m_shapeRotation * FloatPi / 180.0f);
+
+    // Size shape to fit within bounds at any rotation (max expansion is √2 at 45°)
+    static constexpr float Sqrt2 = 1.41421356237f;
+    float size = std::min(itemWidth, itemHeight) / Sqrt2;
 
     auto transformPoint = [&](float px, float py) -> QPointF {
         float x = (px - 0.5f) * size;
