@@ -3,10 +3,9 @@
 #include "../morph/Morph.hpp"
 #include "../shapes/MaterialShapes.hpp"
 #include <QEasingCurve>
-#include <QPainter>
 #include <QPainterPath>
 #include <QPropertyAnimation>
-#include <QQuickPaintedItem>
+#include <QQuickItem>
 #include <QVariantList>
 #include <memory>
 #include <optional>
@@ -78,7 +77,7 @@ private:
  *       morphProgress: slider.value
  *   }
  */
-class MaterialShapeItem : public QQuickPaintedItem {
+class MaterialShapeItem : public QQuickItem {
     Q_OBJECT
     QML_ELEMENT
     QML_NAMED_ELEMENT(MaterialShape)
@@ -338,8 +337,9 @@ signals:
     void customFromShapeChanged();
     void customToShapeChanged();
 
-public:
-    void paint(QPainter* painter) override;
+protected:
+    QSGNode* updatePaintNode(
+        QSGNode* oldNode, UpdatePaintNodeData* data) override;
 
 private slots:
     void onAnimationValueChanged(const QVariant& value);
@@ -378,6 +378,7 @@ private:
     mutable QList<QPolygonF> m_cachedPolygons;
     mutable bool m_pathDirty = true;
     mutable bool m_polygonsDirty = true;
+    bool m_geometryDirty = true;
 
     RoundedPolygonWrapper m_customShape;
     RoundedPolygonWrapper m_customFromShape;
