@@ -19,7 +19,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wunused-lambda-capture)
 endif()
 
-find_package(Qt6 REQUIRED COMPONENTS Core Quick Qml)
+find_package(Qt6 REQUIRED COMPONENTS Core Quick Qml ShaderTools)
 
 qt_policy(SET QTP0001 NEW)
 qt_policy(SET QTP0004 NEW)
@@ -92,8 +92,20 @@ qt_add_qml_module(m3shapes
     SOURCES
         src/qml/MaterialShapeItem.hpp
         src/qml/MaterialShapeItem.cpp
+        src/qml/SmoothShapeMaterial.hpp
+        src/qml/SmoothShapeMaterial.cpp
     OUTPUT_DIRECTORY
         ${QT_QML_OUTPUT_DIRECTORY}/M3Shapes
+)
+
+# Compile the analytic-antialiasing shaders to .qsb via Qt Shader Tools and
+# embed them at :/m3shapes/shaders/*.qsb (see SmoothShapeShader).
+qt_add_shaders(m3shapes "m3shapes_shaders"
+    PREFIX "/m3shapes"
+    BASE "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    FILES
+        src/shaders/smoothshape.vert
+        src/shaders/smoothshape.frag
 )
 
 qt_query_qml_module(m3shapes

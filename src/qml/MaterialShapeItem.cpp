@@ -1,10 +1,10 @@
 #include "MaterialShapeItem.hpp"
 #include "../core/RoundedPolygon.hpp"
 #include "../shapes/Shapes.hpp"
+#include "SmoothShapeMaterial.hpp"
 #include <QSGGeometry>
 #include <QSGGeometryNode>
 #include <QSGNode>
-#include <QSGVertexColorMaterial>
 #include <QVariantMap>
 #include <algorithm>
 #include <cmath>
@@ -564,7 +564,15 @@ namespace {
 // into a triangle mesh in item-local coordinates and drawn through the scene
 // graph. Unlike the old QQuickPaintedItem (which rasterised into a fixed-size
 // texture that QML then stretched), the mesh is re-rasterised at the final
-// on-screen resolution, so it stays crisp at any scale.
+// on-screen resolution, so the solid body stays crisp at any scale.
+//
+// Edge antialiasing is handled by SmoothShapeMaterial's shader: every contour
+// vertex is duplicated into an inner (full-colour) and an outer (transparent)
+// vertex carrying an outward feather DIRECTION. The vertex shader expands that
+// direction by a fixed DEVICE-pixel amount AFTER the combined matrix, so the
+// antialiased fringe is always ~1 screen pixel wide regardless of the item's
+// scale, any accumulated parent scale, or the device pixel ratio -- none of
+// which the CPU side needs to know or react to.
 
 double distSq(const QPointF& a, const QPointF& b) {
     const double dx = a.x() - b.x();
@@ -767,17 +775,21 @@ std::vector<QPointF> outwardNormals(const QList<QPointF>& ring) {
     return normals;
 }
 
-QSGGeometry::ColoredPoint2D colored(
-    const QPointF& p, uchar r, uchar g, uchar b, uchar a) {
-    QSGGeometry::ColoredPoint2D v;
-    v.set(static_cast<float>(p.x()), static_cast<float>(p.y()), r, g, b, a);
+SmoothVertex vertex(const QPointF& p, uchar r, uchar g, uchar b, uchar a,
+    const QPointF& dir = QPointF(0.0, 0.0)) {
+    SmoothVertex v;
+    v.set(static_cast<float>(p.x()), static_cast<float>(p.y()), r, g, b, a,
+        static_cast<float>(dir.x()), static_cast<float>(dir.y()));
     return v;
 }
 
 // Builds the fill mesh: an ear-clipped interior at full (premultiplied) colour
-// plus an outward fringe fading to transparent, for analytic edge antialiasing.
+// plus an outward feather ring. The feather's outer vertices sit at the same
+// local position as the inner ones but carry an outward direction; the shader
+// pushes them out by ~1 device pixel and the transparent colour interpolates to
+// produce the analytic edge antialiasing.
 void buildFillVertices(const QList<QPointF>& ring, const QColor& color,
-    double fringe, std::vector<QSGGeometry::ColoredPoint2D>& out) {
+    std::vector<SmoothVertex>& out) {
     const int n = static_cast<int>(ring.size());
     if (n < 3) {
         return;
@@ -795,29 +807,32 @@ void buildFillVertices(const QList<QPointF>& ring, const QColor& color,
     out.reserve(triangles.size() + static_cast<size_t>(n) * 6);
 
     for (int idx : triangles) {
-        out.push_back(colored(ring[idx], pr, pg, pb, pa));
+        out.push_back(vertex(ring[idx], pr, pg, pb, pa));
     }
     for (int i = 0; i < n; ++i) {
         const int j = (i + 1) % n;
-        const QPointF innerI = ring[i];
-        const QPointF innerJ = ring[j];
-        const QPointF outerI =
-            ring[i] + normals[static_cast<size_t>(i)] * fringe;
-        const QPointF outerJ =
-            ring[j] + normals[static_cast<size_t>(j)] * fringe;
-        out.push_back(colored(innerI, pr, pg, pb, pa));
-        out.push_back(colored(outerI, 0, 0, 0, 0));
-        out.push_back(colored(outerJ, 0, 0, 0, 0));
-        out.push_back(colored(innerI, pr, pg, pb, pa));
-        out.push_back(colored(outerJ, 0, 0, 0, 0));
-        out.push_back(colored(innerJ, pr, pg, pb, pa));
+        const QPointF& ni = normals[static_cast<size_t>(i)];
+        const QPointF& nj = normals[static_cast<size_t>(j)];
+        const SmoothVertex innerI = vertex(ring[i], pr, pg, pb, pa);
+        const SmoothVertex innerJ = vertex(ring[j], pr, pg, pb, pa);
+        const SmoothVertex outerI = vertex(ring[i], 0, 0, 0, 0, ni);
+        const SmoothVertex outerJ = vertex(ring[j], 0, 0, 0, 0, nj);
+        out.push_back(innerI);
+        out.push_back(outerI);
+        out.push_back(outerJ);
+        out.push_back(innerI);
+        out.push_back(outerJ);
+        out.push_back(innerJ);
     }
 }
 
-// Builds a centered stroke ribbon (total width = 2 * halfWidth) along the
-// contour, premultiplied.
+// Builds a centered stroke ribbon (core total width = 2 * halfWidth) along the
+// contour, premultiplied, with a ~1 device-pixel feather on its inner and outer
+// edges (same shader-expanded mechanism as the fill) so the stroke antialiases
+// at any scale. The core width itself stays in local units (scales with the
+// shape); only the feather is pinned to device pixels.
 void buildStrokeVertices(const QList<QPointF>& ring, const QColor& color,
-    double halfWidth, std::vector<QSGGeometry::ColoredPoint2D>& out) {
+    double halfWidth, std::vector<SmoothVertex>& out) {
     const int n = static_cast<int>(ring.size());
     if (n < 2 || halfWidth <= 0.0) {
         return;
@@ -830,7 +845,16 @@ void buildStrokeVertices(const QList<QPointF>& ring, const QColor& color,
     const uchar pa = static_cast<uchar>(alpha);
 
     const std::vector<QPointF> normals = outwardNormals(ring);
-    out.reserve(static_cast<size_t>(n) * 6);
+    const auto quad = [&](const SmoothVertex& a, const SmoothVertex& b,
+                          const SmoothVertex& c, const SmoothVertex& d) {
+        out.push_back(a);
+        out.push_back(b);
+        out.push_back(c);
+        out.push_back(a);
+        out.push_back(c);
+        out.push_back(d);
+    };
+    out.reserve(static_cast<size_t>(n) * 18);
     for (int i = 0; i < n; ++i) {
         const int j = (i + 1) % n;
         const QPointF& ni = normals[static_cast<size_t>(i)];
@@ -839,28 +863,36 @@ void buildStrokeVertices(const QList<QPointF>& ring, const QColor& color,
         const QPointF outI = ring[i] + ni * halfWidth;
         const QPointF inJ = ring[j] - nj * halfWidth;
         const QPointF outJ = ring[j] + nj * halfWidth;
-        out.push_back(colored(inI, pr, pg, pb, pa));
-        out.push_back(colored(outI, pr, pg, pb, pa));
-        out.push_back(colored(outJ, pr, pg, pb, pa));
-        out.push_back(colored(inI, pr, pg, pb, pa));
-        out.push_back(colored(outJ, pr, pg, pb, pa));
-        out.push_back(colored(inJ, pr, pg, pb, pa));
+
+        // Core ribbon (full colour).
+        const SmoothVertex cInI = vertex(inI, pr, pg, pb, pa);
+        const SmoothVertex cOutI = vertex(outI, pr, pg, pb, pa);
+        const SmoothVertex cInJ = vertex(inJ, pr, pg, pb, pa);
+        const SmoothVertex cOutJ = vertex(outJ, pr, pg, pb, pa);
+        quad(cInI, cOutI, cOutJ, cInJ);
+
+        // Outer feather: full colour -> transparent, pushed +1px along normal.
+        quad(cOutI, vertex(outI, 0, 0, 0, 0, ni),
+            vertex(outJ, 0, 0, 0, 0, nj), cOutJ);
+
+        // Inner feather: full colour -> transparent, pushed -1px along normal.
+        quad(cInI, vertex(inI, 0, 0, 0, 0, QPointF(-ni.x(), -ni.y())),
+            vertex(inJ, 0, 0, 0, 0, QPointF(-nj.x(), -nj.y())), cInJ);
     }
 }
 
-QSGGeometryNode* makeColoredNode() {
-    auto* geometry =
-        new QSGGeometry(QSGGeometry::defaultAttributes_ColoredPoint2D(), 0);
+QSGGeometryNode* makeShapeNode() {
+    auto* geometry = new QSGGeometry(smoothShapeAttributes(), 0);
     geometry->setDrawingMode(QSGGeometry::DrawTriangles);
     auto* node = new QSGGeometryNode();
     node->setGeometry(geometry);
-    node->setMaterial(new QSGVertexColorMaterial());
+    node->setMaterial(new SmoothShapeMaterial());
     node->setFlags(QSGNode::OwnsGeometry | QSGNode::OwnsMaterial);
     return node;
 }
 
-void uploadColored(QSGGeometryNode* node,
-    const std::vector<QSGGeometry::ColoredPoint2D>& verts) {
+void uploadVertices(
+    QSGGeometryNode* node, const std::vector<SmoothVertex>& verts) {
     QSGGeometry* geometry = node->geometry();
     const int count = static_cast<int>(verts.size());
     if (geometry->vertexCount() != count) {
@@ -868,7 +900,7 @@ void uploadColored(QSGGeometryNode* node,
     }
     if (count > 0) {
         std::memcpy(geometry->vertexData(), verts.data(),
-            verts.size() * sizeof(QSGGeometry::ColoredPoint2D));
+            verts.size() * sizeof(SmoothVertex));
     }
     node->markDirty(QSGNode::DirtyGeometry);
 }
@@ -908,24 +940,24 @@ QSGNode* MaterialShapeItem::updatePaintNode(
 
     // Fill: keep it first so the stroke draws on top.
     if (root->fill == nullptr) {
-        root->fill = makeColoredNode();
+        root->fill = makeShapeNode();
         root->prependChildNode(root->fill);
     }
-    std::vector<QSGGeometry::ColoredPoint2D> fillVerts;
-    buildFillVertices(ring, m_color, 1.0, fillVerts);
-    uploadColored(root->fill, fillVerts);
+    std::vector<SmoothVertex> fillVerts;
+    buildFillVertices(ring, m_color, fillVerts);
+    uploadVertices(root->fill, fillVerts);
 
     // Stroke: optional centered ribbon over the same contour.
     const bool wantStroke = m_strokeWidth > 0.0f && m_strokeColor.alpha() > 0;
     if (wantStroke) {
         if (root->stroke == nullptr) {
-            root->stroke = makeColoredNode();
+            root->stroke = makeShapeNode();
             root->appendChildNode(root->stroke);
         }
-        std::vector<QSGGeometry::ColoredPoint2D> strokeVerts;
+        std::vector<SmoothVertex> strokeVerts;
         buildStrokeVertices(ring, m_strokeColor,
             static_cast<double>(m_strokeWidth) / 2.0, strokeVerts);
-        uploadColored(root->stroke, strokeVerts);
+        uploadVertices(root->stroke, strokeVerts);
     } else if (root->stroke != nullptr) {
         root->removeChildNode(root->stroke);
         delete root->stroke;
