@@ -640,7 +640,7 @@ QList<QPointF> buildRing(
     // triangulation stays well-conditioned.
     QList<QPointF> dedup;
     dedup.reserve(ring.size());
-    for (const QPointF& p : ring) {
+    for (const QPointF& p : std::as_const(ring)) {
         if (dedup.isEmpty() || distSq(dedup.last(), p) > 1e-6) {
             dedup.append(p);
         }
