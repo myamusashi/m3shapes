@@ -1,4 +1,5 @@
 #include "PolygonMeasure.hpp"
+#include <QtNumeric>
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -103,11 +104,11 @@ MeasuredPolygon::MeasuredPolygon(std::shared_ptr<Measurer> measurer,
         throw std::invalid_argument(
             "Outline progress size must be cubics size + 1");
     }
-    if (outlineProgress.front() != 0.0f) {
+    if (!qFuzzyIsNull(outlineProgress.front())) {
         throw std::invalid_argument(
             "First outline progress value must be zero");
     }
-    if (outlineProgress.back() != 1.0f) {
+    if (!qFuzzyCompare(outlineProgress.back() + 1.0f, 1.0f + 1.0f)) {
         throw std::invalid_argument("Last outline progress value must be one");
     }
 

@@ -1,4 +1,5 @@
 #include "Cubic.hpp"
+#include <QtNumeric>
 #include <algorithm>
 #include <cmath>
 
@@ -89,7 +90,7 @@ void Cubic::calculateBounds(
     float xc = -anchor0X() + control0X();
 
     if (std::abs(xa) < DistanceEpsilon) {
-        if (xb != 0.0f) {
+        if (!qFuzzyIsNull(xb)) {
             checkExtreme(2.0f * xc / (-2.0f * xb), true);
         }
     } else {
@@ -108,7 +109,7 @@ void Cubic::calculateBounds(
     float yc = -anchor0Y() + control0Y();
 
     if (std::abs(ya) < DistanceEpsilon) {
-        if (yb != 0.0f) {
+        if (!qFuzzyIsNull(yb)) {
             checkExtreme(2.0f * yc / (-2.0f * yb), false);
         }
     } else {
