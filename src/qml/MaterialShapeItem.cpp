@@ -652,8 +652,8 @@ QList<QPointF> buildRing(
 }
 
 double signedCrossZ(const QPointF& a, const QPointF& b, const QPointF& c) {
-    return (b.x() - a.x()) * (c.y() - a.y())
-        - (b.y() - a.y()) * (c.x() - a.x());
+    return (b.x() - a.x()) * (c.y() - a.y()) -
+           (b.y() - a.y()) * (c.x() - a.x());
 }
 
 bool pointInTriangle(
@@ -755,7 +755,9 @@ std::vector<QPointF> outwardNormals(const QList<QPointF>& ring) {
         const double l = std::hypot(p.x(), p.y());
         return l > 1e-9 ? QPointF(p.x() / l, p.y() / l) : QPointF(0.0, 0.0);
     };
-    const auto leftNormal = [](QPointF e) { return QPointF(-e.y(), e.x()); };
+    const auto leftNormal = [](QPointF e) {
+        return QPointF(-e.y(), e.x());
+    };
 
     for (int i = 0; i < n; ++i) {
         const QPointF& prev = ring[(i - 1 + n) % n];
@@ -795,7 +797,9 @@ void buildFillVertices(const QList<QPointF>& ring, const QColor& color,
         return;
     }
     const int alpha = color.alpha();
-    const auto pm = [&](int c) { return static_cast<uchar>(c * alpha / 255); };
+    const auto pm = [&](int c) {
+        return static_cast<uchar>(c * alpha / 255);
+    };
     const uchar pr = pm(color.red());
     const uchar pg = pm(color.green());
     const uchar pb = pm(color.blue());
@@ -838,7 +842,9 @@ void buildStrokeVertices(const QList<QPointF>& ring, const QColor& color,
         return;
     }
     const int alpha = color.alpha();
-    const auto pm = [&](int c) { return static_cast<uchar>(c * alpha / 255); };
+    const auto pm = [&](int c) {
+        return static_cast<uchar>(c * alpha / 255);
+    };
     const uchar pr = pm(color.red());
     const uchar pg = pm(color.green());
     const uchar pb = pm(color.blue());
@@ -872,8 +878,8 @@ void buildStrokeVertices(const QList<QPointF>& ring, const QColor& color,
         quad(cInI, cOutI, cOutJ, cInJ);
 
         // Outer feather: full colour -> transparent, pushed +1px along normal.
-        quad(cOutI, vertex(outI, 0, 0, 0, 0, ni),
-            vertex(outJ, 0, 0, 0, 0, nj), cOutJ);
+        quad(cOutI, vertex(outI, 0, 0, 0, 0, ni), vertex(outJ, 0, 0, 0, 0, nj),
+            cOutJ);
 
         // Inner feather: full colour -> transparent, pushed -1px along normal.
         quad(cInI, vertex(inI, 0, 0, 0, 0, QPointF(-ni.x(), -ni.y())),

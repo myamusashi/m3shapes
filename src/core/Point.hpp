@@ -13,9 +13,9 @@ struct Point {
 
     constexpr Point() = default;
 
-    constexpr Point(float x, float y)
-        : x(x)
-        , y(y) {}
+    constexpr Point(float x_, float y_)
+        : x(x_)
+        , y(y_) {}
 
     // Magnitude (distance from origin)
     [[nodiscard]] float getDistance() const { return std::sqrt(x * x + y * y); }

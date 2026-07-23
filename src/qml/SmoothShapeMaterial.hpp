@@ -37,19 +37,19 @@ struct SmoothVertex {
     }
 };
 
-static_assert(
-    sizeof(SmoothVertex) == 20, "SmoothVertex must be tightly packed (20 bytes)");
+static_assert(sizeof(SmoothVertex) == 20,
+    "SmoothVertex must be tightly packed (20 bytes)");
 
 /** Attribute set describing SmoothVertex to the scene graph. */
 const QSGGeometry::AttributeSet& smoothShapeAttributes();
 
 /**
- * Material that draws SmoothVertex geometry with a shader-computed, device-pixel
- * antialiased edge. The feather width is constant in screen pixels regardless of
- * the item's scale, any accumulated parent scale, or the window device pixel
- * ratio, because the expansion happens after the combined matrix in the vertex
- * shader (see smoothshape.vert). Colour is per-vertex, so the material itself is
- * stateless.
+ * Material that draws SmoothVertex geometry with a shader-computed,
+ * device-pixel antialiased edge. The feather width is constant in screen pixels
+ * regardless of the item's scale, any accumulated parent scale, or the window
+ * device pixel ratio, because the expansion happens after the combined matrix
+ * in the vertex shader (see smoothshape.vert). Colour is per-vertex, so the
+ * material itself is stateless.
  */
 class SmoothShapeMaterial : public QSGMaterial {
 public:

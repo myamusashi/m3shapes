@@ -85,9 +85,9 @@ struct TransformResult {
     float x;
     float y;
 
-    TransformResult(float x, float y)
-        : x(x)
-        , y(y) {}
+    TransformResult(float x_, float y_)
+        : x(x_)
+        , y(y_) {}
 };
 
 // Point transformer function type

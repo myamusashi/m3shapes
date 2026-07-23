@@ -94,10 +94,10 @@ public:
         float x, y;
         CornerRounding rounding;
 
-        PointNRound(float x, float y,
+        PointNRound(float x_, float y_,
             const CornerRounding& r = CornerRounding::Unrounded)
-            : x(x)
-            , y(y)
+            : x(x_)
+            , y(y_)
             , rounding(r) {}
     };
 

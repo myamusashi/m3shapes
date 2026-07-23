@@ -22,9 +22,9 @@ struct CornerRounding {
 
     constexpr CornerRounding() = default;
 
-    constexpr CornerRounding(float radius, float smoothing = 0.0f)
-        : radius(radius)
-        , smoothing(smoothing) {}
+    constexpr CornerRounding(float radius_, float smoothing_ = 0.0f)
+        : radius(radius_)
+        , smoothing(smoothing_) {}
 
     [[nodiscard]] bool operator==(const CornerRounding& other) const {
         constexpr float epsilon = 1e-6f;
